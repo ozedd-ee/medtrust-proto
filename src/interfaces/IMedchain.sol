@@ -6,24 +6,25 @@ interface IMedchain {
     struct Product {
         string name;
         string description;
-        uint32 ProductID;
-        uint32 manufacturerID;
+        bytes32 ProductID;
         uint256 batchCounter;
-        mapping(uint256 => Batch) productBatches;
+        uint256 totalProductStock;
+        mapping(uint256 => Batch) productBatches; // batch number to Batch
     }
 
     struct Batch {
         uint32 numberOfUnitsProduced;
         uint32 numberOfUnitsSold;
         uint32 rawMatSupplierID; // ID of the supplier of the raw materials for a particular batch
+        uint32 manufacturerID;
         uint32 distributorID;
-        uint256 batchNo;
+        uint256 batchNo; // batch number
         mapping(uint32 => Unit) units; // productIDs to product
         Stage stage; // Current stage in the supply chain process
     }
 
     struct Unit {
-        uint32 ProductID;
+        bytes32 ProductID;
         uint32 unitID; 
         uint256 batchNo;
         address retailerID; // Should be 0x00 at initialization
@@ -57,6 +58,30 @@ interface IMedchain {
         address addr; // Also serves as retailer's ID
     }
 
+    struct AddProductParams {
+        string name;
+        string description;
+    }
+
+    struct ManufactureParams {
+        bytes32 productID;
+        uint32 noOfUnits;
+        uint32 rawMatSupplierID;
+        uint32 manufacturerID;
+    }
+
+    struct DistributeParams {
+        bytes32 productID;
+        uint32 batchNo;
+        uint32 distributorID;
+    }
+
+    struct SaleParams {
+        bytes32 productID;
+        uint256 batchNo;
+        address retailerID;
+    }
+
     enum Stage {
         Manufacture,
         Distribution,
@@ -66,7 +91,7 @@ interface IMedchain {
     }
 
     enum Status {
-        enRoute,
-        Sold
+        enRoute, // Still traveling along the chain with batch, check for batch stage
+        Sold // Sold to consumer
     }
 }
