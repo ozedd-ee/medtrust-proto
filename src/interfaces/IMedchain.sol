@@ -6,9 +6,10 @@ interface IMedchain {
     struct Product {
         string name;
         string description;
-        bytes32 ProductID;
+        bytes32 productID;
         uint256 batchCounter;
         uint256 totalProductStock;
+        uint256 totalUnitsSold;
         mapping(uint256 => Batch) productBatches; // batch number to Batch
     }
 
@@ -24,7 +25,7 @@ interface IMedchain {
     }
 
     struct Unit {
-        bytes32 ProductID;
+        bytes32 productID;
         uint32 unitID; 
         uint256 batchNo;
         address retailerID; // Should be 0x00 at initialization
@@ -61,6 +62,13 @@ interface IMedchain {
     struct AddProductParams {
         string name;
         string description;
+    }
+
+    struct AddChainParticipantParams {
+        string name;
+        string location;
+        uint32 ID;
+        address addr;
     }
 
     struct ManufactureParams {
