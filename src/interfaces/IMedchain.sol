@@ -3,6 +3,10 @@ pragma solidity 0.8.24;
 
 interface IMedchain {
 
+    error OnlyManufacturersCanCall();
+    error OnlyDistributorsCanCall();
+    error OnlyRetailersCanCall();
+
     struct Product {
         string name;
         string description;
@@ -67,7 +71,6 @@ interface IMedchain {
     struct AddChainParticipantParams {
         string name;
         string location;
-        uint32 ID;
         address addr;
     }
 
