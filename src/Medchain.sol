@@ -7,10 +7,11 @@ import { IMedchain } from "./interfaces/IMedchain.sol";
 contract Medchain is IMedchain, Ownable {
 
     uint256 private nonce; // Used to ensure uniqueness of productIDs within the contract 
-    uint256 public manufacturerCount;
-    uint256 public distributorCount;
+    uint32 public manufacturerCount;
+    uint32 public distributorCount;
+    uint32 public supplierCount;
     uint256 public productCount;
-    uint256 public supplierCount;
+
 
     mapping(bytes32 => Product) public products;
     mapping(uint32 => rawMatSupplier) public suppliers;
@@ -23,6 +24,9 @@ contract Medchain is IMedchain, Ownable {
     }
 
     function manufacture(ManufactureParams memory _params) external {
+        if (manufacturers[_params.manufacturerID].addr != msg.sender) {
+            revert OnlyManufacturersCanCall();
+        }
         Product storage product = products[_params.productID];
         product.batchCounter++;
         product.totalProductStock += _params.noOfUnits;
@@ -44,12 +48,18 @@ contract Medchain is IMedchain, Ownable {
     }
 
     function distribute(DistributeParams memory _params) external {
+        if (distributors[_params.distributorID].addr != msg.sender) {
+            revert OnlyDistributorsCanCall();
+        }
         Product storage product = products[_params.productID];
         product.productBatches[_params.batchNo].distributorID = _params.distributorID;
         product.productBatches[_params.batchNo].stage = Stage.Distributed;
     }
 
     function makeSale(SaleParams memory _params) external {
+        if (retailers[_params.retailerID].addr != msg.sender) {
+            revert OnlyRetailersCanCall();
+        }
         Product storage product = products[_params.productID];
         product.totalUnitsSold++;
         product.productBatches[_params.batchNo].numberOfUnitsSold++;
@@ -61,7 +71,7 @@ contract Medchain is IMedchain, Ownable {
         unit.status = Status.Sold;
     }
 
-// ========================= ONLY-ADMIN FUNCTIONS  ========================= 
+// ========================= ADMIN FUNCTIONS  ========================= 
     function addProduct(AddProductParams memory _params) external onlyOwner() {
         bytes32 productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));
         nonce++;
@@ -77,26 +87,26 @@ contract Medchain is IMedchain, Ownable {
 
     function addManufacturer(AddChainParticipantParams memory _params) external onlyOwner() {
         manufacturerCount++;
-        manufacturers[_params.ID].name = _params.name;
-        manufacturers[_params.ID].location = _params.location;
-        manufacturers[_params.ID].ID = _params.ID;
-        manufacturers[_params.ID].addr = _params.addr;
+        manufacturers[manufacturerCount].name = _params.name;
+        manufacturers[manufacturerCount].location = _params.location;
+        manufacturers[manufacturerCount].ID = manufacturerCount;
+        manufacturers[manufacturerCount].addr = _params.addr;
     }
 
     function addDistributor(AddChainParticipantParams memory _params) external onlyOwner() {
         distributorCount++;
-        distributors[_params.ID].name = _params.name;
-        distributors[_params.ID].location = _params.location;
-        distributors[_params.ID].ID = _params.ID;
-        distributors[_params.ID].addr = _params.addr;
+        distributors[distributorCount].name = _params.name;
+        distributors[distributorCount].location = _params.location;
+        distributors[distributorCount].ID = distributorCount;
+        distributors[distributorCount].addr = _params.addr;
     }
 
     function addRawMatSupplier(AddChainParticipantParams memory _params) external onlyOwner() {
         supplierCount++;
-        suppliers[_params.ID].name = _params.name;
-        suppliers[_params.ID].location = _params.location;
-        suppliers[_params.ID].ID = _params.ID;
-        suppliers[_params.ID].addr = _params.addr;
+        suppliers[supplierCount].name = _params.name;
+        suppliers[supplierCount].location = _params.location;
+        suppliers[supplierCount].ID = supplierCount;
+        suppliers[supplierCount].addr = _params.addr;
     } 
 
     function addRetailer(
