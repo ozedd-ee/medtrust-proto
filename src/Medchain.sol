@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.24;
 
+import { Ownable } from "solady/auth/Ownable.sol";
 import { IMedchain } from "./interfaces/IMedchain.sol";
 
-contract Medchain is IMedchain {
+contract Medchain is IMedchain, Ownable {
 
     uint256 private nonce; // Used to ensure uniqueness of productIDs within the contract 
     uint256 public manufacturerCount;
     uint256 public distributorCount;
     uint256 public productCount;
     uint256 public supplierCount;
-    address public administrator; // Company admin
 
     mapping(bytes32 => Product) public products;
     mapping(uint32 => rawMatSupplier) public suppliers;
@@ -19,12 +19,7 @@ contract Medchain is IMedchain {
     mapping(address => Retailer) public retailers;
 
     constructor() {
-        administrator = msg.sender;
-    }
-
-    modifier onlyAdmin() {
-        require(msg.sender == administrator);
-        _;
+        _initializeOwner(msg.sender);
     }
 
     function manufacture(ManufactureParams memory _params) external {
@@ -67,7 +62,7 @@ contract Medchain is IMedchain {
     }
 
 // ========================= ONLY-ADMIN FUNCTIONS  ========================= 
-    function addProduct(AddProductParams memory _params) external onlyAdmin() {
+    function addProduct(AddProductParams memory _params) external onlyOwner() {
         bytes32 productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));
         nonce++;
 
@@ -80,7 +75,7 @@ contract Medchain is IMedchain {
         products[productID].totalUnitsSold = 0;
     }
 
-    function addManufacturer(AddChainParticipantParams memory _params) external onlyAdmin() {
+    function addManufacturer(AddChainParticipantParams memory _params) external onlyOwner() {
         manufacturerCount++;
         manufacturers[_params.ID].name = _params.name;
         manufacturers[_params.ID].location = _params.location;
@@ -88,7 +83,7 @@ contract Medchain is IMedchain {
         manufacturers[_params.ID].addr = _params.addr;
     }
 
-    function addDistributor(AddChainParticipantParams memory _params) external onlyAdmin() {
+    function addDistributor(AddChainParticipantParams memory _params) external onlyOwner() {
         distributorCount++;
         distributors[_params.ID].name = _params.name;
         distributors[_params.ID].location = _params.location;
@@ -96,7 +91,7 @@ contract Medchain is IMedchain {
         distributors[_params.ID].addr = _params.addr;
     }
 
-    function addRawMatSupplier(AddChainParticipantParams memory _params) external onlyAdmin() {
+    function addRawMatSupplier(AddChainParticipantParams memory _params) external onlyOwner() {
         supplierCount++;
         suppliers[_params.ID].name = _params.name;
         suppliers[_params.ID].location = _params.location;
@@ -108,7 +103,7 @@ contract Medchain is IMedchain {
         string memory _name, 
         string memory _location, 
         address _addr
-    ) external onlyAdmin() {
+    ) external onlyOwner() {
         retailers[_addr].name = _name;
         retailers[_addr].location = _location;
         retailers[_addr].addr = _addr;
