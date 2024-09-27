@@ -27,6 +27,45 @@ contract Medchain is IMedchain {
         _;
     }
 
+    function manufacture(ManufactureParams memory _params) external {
+        Product storage product = products[_params.productID];
+        product.batchCounter++;
+        product.totalProductStock += _params.noOfUnits;
+
+        Batch storage batch = product.productBatches[product.batchCounter];
+        batch.numberOfUnitsProduced = _params.noOfUnits;
+        batch.rawMatSupplierID = _params.rawMatSupplierID;
+        batch.manufacturerID = _params.manufacturerID;
+        batch.stage = Stage.Manufactured;
+
+        for (uint32 i; i <= _params.noOfUnits; i++) {
+            Unit storage unit = batch.units[i];
+            unit.productID = _params.productID;
+            unit.unitID = i;
+            unit.batchNo = product.batchCounter;
+            unit.retailerID;
+            unit.status = Status.enRoute;
+        }
+    }
+
+    function distribute(DistributeParams memory _params) external {
+        Product storage product = products[_params.productID];
+        product.productBatches[_params.batchNo].distributorID = _params.distributorID;
+        product.productBatches[_params.batchNo].stage = Stage.Distributed;
+    }
+
+    function makeSale(SaleParams memory _params) external {
+        Product storage product = products[_params.productID];
+        product.totalUnitsSold++;
+        product.productBatches[_params.batchNo].numberOfUnitsSold++;
+
+        product.productBatches[_params.batchNo].stage = Stage.Retail;
+        
+        Unit storage unit = product.productBatches[_params.batchNo].units[_params.unitID];
+        unit.retailerID = _params.retailerID;
+        unit.status = Status.Sold;
+    }
+
 // ========================= ONLY-ADMIN FUNCTIONS  ========================= 
     function addProduct(AddProductParams memory _params) external onlyAdmin() {
         bytes32 productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));

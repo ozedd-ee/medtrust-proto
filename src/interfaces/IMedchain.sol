@@ -38,7 +38,7 @@ interface IMedchain {
         uint32 ID; //supplier id
         address addr; 
     }
-
+ 
     struct Manufacturer {
         string name; // name of manufacturer
         string location; //Physical address of manufacturer
@@ -86,15 +86,15 @@ interface IMedchain {
 
     struct SaleParams {
         bytes32 productID;
+        uint32 unitID;
         uint256 batchNo;
         address retailerID;
     }
 
     enum Stage {
-        Manufacture,
-        Distribution,
+        Manufactured,
+        Distributed,
         Retail,
-        onSale,
         soldOut
     }
 
