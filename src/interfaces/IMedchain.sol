@@ -2,10 +2,15 @@
 pragma solidity 0.8.24;
 
 interface IMedchain {
-
+    // ======================= ERRORS ======================= 
     error OnlyManufacturersCanCall();
     error OnlyDistributorsCanCall();
     error OnlyRetailersCanCall();
+
+    // ======================= EVENTS =======================
+    event ProductAdded(bytes32 indexed productID, string name);
+    event UnitSold(bytes32 productID, uint256 batchNo, uint32 unitID);
+    event NewBatch(bytes32 productID, uint256 batchNo);
 
     struct Product {
         string name;

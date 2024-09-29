@@ -45,6 +45,8 @@ contract Medchain is IMedchain, Ownable {
             unit.retailerID;
             unit.status = Status.enRoute;
         }
+
+        emit NewBatch(_params.productID, product.batchCounter);
     }
 
     function distribute(DistributeParams memory _params) external {
@@ -69,9 +71,11 @@ contract Medchain is IMedchain, Ownable {
         Unit storage unit = product.productBatches[_params.batchNo].units[_params.unitID];
         unit.retailerID = _params.retailerID;
         unit.status = Status.Sold;
+
+        emit UnitSold(_params.productID, _params.batchNo, _params.unitID);
     }
 
-// ========================= ADMIN FUNCTIONS  ========================= 
+    // ========================= ADMIN FUNCTIONS  ========================= 
     function addProduct(AddProductParams memory _params) external onlyOwner() {
         bytes32 productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));
         nonce++;
@@ -83,6 +87,8 @@ contract Medchain is IMedchain, Ownable {
         products[productID].batchCounter = 0;
         products[productID].totalProductStock = 0;
         products[productID].totalUnitsSold = 0;
+
+        emit ProductAdded(productID, _params.name);
     }
 
     function addManufacturer(AddChainParticipantParams memory _params) external onlyOwner() {
