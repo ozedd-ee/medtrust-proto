@@ -28,6 +28,8 @@ interface IMedchain {
         uint32 rawMatSupplierID; // ID of the supplier of the raw materials for a particular batch
         uint32 manufacturerID;
         uint32 distributorID;
+        uint256 manufactureDate;
+        uint256 expiryDate; 
         uint256 batchNo; // batch number
         mapping(uint32 => Unit) units; // productIDs to product
         Stage stage; // Current stage in the supply chain process
@@ -84,6 +86,7 @@ interface IMedchain {
         uint32 noOfUnits;
         uint32 rawMatSupplierID;
         uint32 manufacturerID;
+        uint256 expiryDate;
     }
 
     struct DistributeParams {
@@ -99,9 +102,13 @@ interface IMedchain {
         address retailerID;
     }
 
+// Create Warehouse struct to track location, storage conditions, batches stored(using a map) etc
     enum Stage {
         Manufactured,
-        Distributed,
+        DepartedForWarehouse,
+        ArrivedWarehouse,
+        DepartedWarehouse,
+        Shipped,
         Retail,
         soldOut
     }

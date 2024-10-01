@@ -35,6 +35,8 @@ contract Medchain is IMedchain, Ownable {
         batch.numberOfUnitsProduced = _params.noOfUnits;
         batch.rawMatSupplierID = _params.rawMatSupplierID;
         batch.manufacturerID = _params.manufacturerID;
+        batch.manufactureDate = block.timestamp;
+        batch.expiryDate = _params.expiryDate;
         batch.stage = Stage.Manufactured;
 
         for (uint32 i; i <= _params.noOfUnits; i++) {
@@ -49,16 +51,52 @@ contract Medchain is IMedchain, Ownable {
         emit NewBatch(_params.productID, product.batchCounter);
     }
 
-    function distribute(DistributeParams memory _params) external {
-        if (distributors[_params.distributorID].addr != msg.sender) {
+    function moveToWarehouse(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+        if (distributors[_distributorID].addr != msg.sender) {
             revert OnlyDistributorsCanCall();
         }
-        Product storage product = products[_params.productID];
-        product.productBatches[_params.batchNo].distributorID = _params.distributorID;
-        product.productBatches[_params.batchNo].stage = Stage.Distributed;
+        Batch storage batch = products[_productID].productBatches[_batchNo];
+        require(batch.stage == Stage.Manufactured, "Batch not ready for dispatch");
+        batch.stage = Stage.DepartedForWarehouse;
     }
 
-    function makeSale(SaleParams memory _params) external {
+    function store(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+        if (distributors[_distributorID].addr != msg.sender) {
+            revert OnlyDistributorsCanCall();
+        }
+        Batch storage batch = products[_productID].productBatches[_batchNo];
+        require(batch.stage == Stage.DepartedForWarehouse, "Batch not in warehouse");
+        batch.stage = Stage.ArrivedWarehouse;
+    }
+
+    function moveFromWarehouse(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+        if (distributors[_distributorID].addr != msg.sender) {
+            revert OnlyDistributorsCanCall();
+        }
+        Batch storage batch = products[_productID].productBatches[_batchNo];
+        require(batch.stage == Stage.ArrivedWarehouse, "Batch not in warehouse");
+        batch.stage = Stage.DepartedWarehouse;
+    }
+
+    function ship(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+        if (distributors[_distributorID].addr != msg.sender) {
+            revert OnlyDistributorsCanCall();
+        }
+        Batch storage batch = products[_productID].productBatches[_batchNo];
+        require(batch.stage == Stage.DepartedWarehouse, "Batch has not left the warehouse");
+        batch.stage = Stage.Shipped;
+    }
+
+    function receiveBatch(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+        if (distributors[_distributorID].addr != msg.sender) {
+            revert OnlyDistributorsCanCall();
+        }
+        Batch storage batch = products[_productID].productBatches[_batchNo];
+        require(batch.stage == Stage.Shipped, "Batch not yet shipped");
+        batch.stage = Stage.Retail;
+    }
+
+        function makeSale(SaleParams memory _params) external {
         if (retailers[_params.retailerID].addr != msg.sender) {
             revert OnlyRetailersCanCall();
         }
