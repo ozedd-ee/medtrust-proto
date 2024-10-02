@@ -58,6 +58,8 @@ contract Medchain is IMedchain, Ownable {
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.Manufactured, "Batch not ready for dispatch");
         batch.stage = Stage.DepartedForWarehouse;
+
+        emit DepartedForWarehouse(_productID, _batchNo, _distributorID);
     }
 
     function store(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
@@ -65,8 +67,10 @@ contract Medchain is IMedchain, Ownable {
             revert OnlyDistributorsCanCall();
         }
         Batch storage batch = products[_productID].productBatches[_batchNo];
-        require(batch.stage == Stage.DepartedForWarehouse, "Batch not in warehouse");
+        require(batch.stage == Stage.DepartedForWarehouse, "Batch yet to arrive");
         batch.stage = Stage.ArrivedWarehouse;
+
+        emit ArrivedWarehouse(_productID, _batchNo, _distributorID);
     }
 
     function moveFromWarehouse(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
@@ -76,6 +80,8 @@ contract Medchain is IMedchain, Ownable {
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.ArrivedWarehouse, "Batch not in warehouse");
         batch.stage = Stage.DepartedWarehouse;
+
+        emit DepartedWarehouse(_productID, _batchNo, _distributorID);
     }
 
     function ship(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
@@ -85,22 +91,31 @@ contract Medchain is IMedchain, Ownable {
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.DepartedWarehouse, "Batch has not left the warehouse");
         batch.stage = Stage.Shipped;
+
+        emit Shipped(_productID, _batchNo, _distributorID);
     }
 
-    function receiveBatch(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
-        if (distributors[_distributorID].addr != msg.sender) {
-            revert OnlyDistributorsCanCall();
+    function receiveBatch(bytes32 _productID, uint256 _batchNo, address _retailerID) external {
+        if (retailers[_retailerID].addr != msg.sender) {
+            revert OnlyRetailersCanCall();
         }
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.Shipped, "Batch not yet shipped");
         batch.stage = Stage.Retail;
+
+        emit ReceivedByRetailer(_productID, _batchNo, _retailerID);
     }
 
-        function makeSale(SaleParams memory _params) external {
+    function makeSale(SaleParams memory _params) external {
         if (retailers[_params.retailerID].addr != msg.sender) {
             revert OnlyRetailersCanCall();
         }
         Product storage product = products[_params.productID];
+        uint32 sold = product.productBatches[_params.batchNo].numberOfUnitsSold;
+        uint32 produced = product.productBatches[_params.batchNo].numberOfUnitsProduced;
+        if (produced == sold) {
+            revert BatchSoldOut(_params.batchNo);
+        }
         product.totalUnitsSold++;
         product.productBatches[_params.batchNo].numberOfUnitsSold++;
 

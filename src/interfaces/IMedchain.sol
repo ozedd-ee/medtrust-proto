@@ -6,11 +6,17 @@ interface IMedchain {
     error OnlyManufacturersCanCall();
     error OnlyDistributorsCanCall();
     error OnlyRetailersCanCall();
+    error BatchSoldOut(uint256 batchNo);
 
     // ======================= EVENTS =======================
     event ProductAdded(bytes32 indexed productID, string name);
     event UnitSold(bytes32 productID, uint256 batchNo, uint32 unitID);
     event NewBatch(bytes32 productID, uint256 batchNo);
+    event DepartedForWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
+    event ArrivedWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
+    event DepartedWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
+    event Shipped(bytes32 productID, uint256 batchNo, uint32 distributorID);
+    event ReceivedByRetailer(bytes32 productID, uint256 batchNo, address retailerID);
 
     struct Product {
         string name;
@@ -31,7 +37,7 @@ interface IMedchain {
         uint256 manufactureDate;
         uint256 expiryDate; 
         uint256 batchNo; // batch number
-        mapping(uint32 => Unit) units; // productIDs to product
+        mapping(uint32 => Unit) units; // unitIDs to units
         Stage stage; // Current stage in the supply chain process
     }
 
