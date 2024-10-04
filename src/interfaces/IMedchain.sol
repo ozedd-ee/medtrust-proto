@@ -49,6 +49,16 @@ interface IMedchain {
         Status status;
     }
 
+    struct Warehouse {
+        uint32 zipCode;
+        string location; // Physical address(State, Country)
+        string longitude;
+        string lattitude;
+        string temp;
+        StorageCondition cond;
+        mapping(bytes32 => uint256) batchesStored; // productID > batchNo >  batch (find a better solution)
+    }
+
     struct rawMatSupplier {
         string name; // name of supplier
         string location; //Physical address of supplier
@@ -122,5 +132,11 @@ interface IMedchain {
     enum Status {
         enRoute, // Still traveling along the chain with batch, check for batch stage
         Sold // Sold to consumer
+    }
+
+    enum StorageCondition {
+        RoomTemprature,
+        Cooled,
+        Warm
     }
 }
