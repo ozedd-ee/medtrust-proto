@@ -18,6 +18,7 @@ contract Medchain is IMedchain, Ownable {
     mapping(uint32 => Distributor) public distributors;
     mapping(uint32 => Manufacturer) public manufacturers;
     mapping(address => Retailer) public retailers;
+    mapping(uint32 => Warehouse) public warehouses;
 
     constructor() {
         _initializeOwner(msg.sender);
@@ -62,26 +63,33 @@ contract Medchain is IMedchain, Ownable {
         emit DepartedForWarehouse(_productID, _batchNo, _distributorID);
     }
 
-    function store(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
-        if (distributors[_distributorID].addr != msg.sender) {
-            revert OnlyDistributorsCanCall();
+    function store(bytes32 _productID, uint256 _batchNo, uint32 _warehouseID) external {
+        if (warehouses[_warehouseID].managerID != msg.sender) {
+            revert OnlyWarehouseManagerCanCall();
         }
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.DepartedForWarehouse, "Batch yet to arrive");
         batch.stage = Stage.ArrivedWarehouse;
-
-        emit ArrivedWarehouse(_productID, _batchNo, _distributorID);
+        warehouses[_warehouseID].stored[_productID].push(batch.batchNo);
+        emit ArrivedWarehouse(_productID, _batchNo, _warehouseID);
     }
 
-    function moveFromWarehouse(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
+    function moveFromWarehouse(bytes32 _productID, uint256 _batchNo, uint32 _distributorID, uint32 _warehouseID) external {
         if (distributors[_distributorID].addr != msg.sender) {
             revert OnlyDistributorsCanCall();
         }
         Batch storage batch = products[_productID].productBatches[_batchNo];
         require(batch.stage == Stage.ArrivedWarehouse, "Batch not in warehouse");
+        uint256[] storage stored = warehouses[_warehouseID].stored[_productID];
+        for (uint256 i; i <= stored.length; i++) {
+            if (stored[i] == _batchNo) {
+                stored[i] = stored[stored.length + 1];
+                stored.pop();
+            }
+        }
         batch.stage = Stage.DepartedWarehouse;
 
-        emit DepartedWarehouse(_productID, _batchNo, _distributorID);
+        emit DepartedWarehouse(_productID, _batchNo, _warehouseID, _distributorID);
     }
 
     function ship(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {

@@ -6,6 +6,7 @@ interface IMedchain {
     error OnlyManufacturersCanCall();
     error OnlyDistributorsCanCall();
     error OnlyRetailersCanCall();
+    error OnlyWarehouseManagerCanCall();
     error BatchSoldOut(uint256 batchNo);
 
     // ======================= EVENTS =======================
@@ -14,7 +15,7 @@ interface IMedchain {
     event NewBatch(bytes32 productID, uint256 batchNo);
     event DepartedForWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
     event ArrivedWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
-    event DepartedWarehouse(bytes32 productID, uint256 batchNo, uint32 distributorID);
+    event DepartedWarehouse(bytes32 productID, uint256 batchNo, uint32 _warehouseID, uint32 distributorID);
     event Shipped(bytes32 productID, uint256 batchNo, uint32 distributorID);
     event ReceivedByRetailer(bytes32 productID, uint256 batchNo, address retailerID);
 
@@ -50,13 +51,14 @@ interface IMedchain {
     }
 
     struct Warehouse {
-        uint32 zipCode;
-        string location; // Physical address(State, Country)
+        address managerID;
+        uint32 warehouseID;
+        uint32 zipCode; // Zip code of warehouse location 
         string longitude;
         string lattitude;
         string temp;
         StorageCondition cond;
-        mapping(bytes32 => uint256) batchesStored; // productID > batchNo >  batch (find a better solution)
+        mapping(bytes32 => uint256[]) stored; // productID > array of batch numbers
     }
 
     struct rawMatSupplier {
