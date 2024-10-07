@@ -56,7 +56,7 @@ interface IMedchain {
         uint32 zipCode; // Zip code of warehouse location 
         string longitude;
         string lattitude;
-        string temp;
+        string temp; // Storage temprature in degrees celcius
         StorageCondition cond;
         mapping(bytes32 => uint256[]) stored; // productID > array of batch numbers
     }
@@ -91,6 +91,15 @@ interface IMedchain {
     struct AddProductParams {
         string name;
         string description;
+    }
+
+    struct AddWarehouseParams {
+        address managerID;
+        uint32 zipCode;
+        string longitude;
+        string lattitude;
+        string storageTemprature;
+        StorageCondition cond;
     }
 
     struct AddChainParticipantParams {

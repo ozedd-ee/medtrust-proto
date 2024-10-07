@@ -10,6 +10,7 @@ contract Medchain is IMedchain, Ownable {
     uint32 public manufacturerCount;
     uint32 public distributorCount;
     uint32 public supplierCount;
+    uint32 public warehouseCount;
     uint256 public productCount;
 
 
@@ -150,6 +151,17 @@ contract Medchain is IMedchain, Ownable {
         products[productID].totalUnitsSold = 0;
 
         emit ProductAdded(productID, _params.name);
+    }
+
+    function addWarehouse(AddWarehouseParams memory _params) external onlyOwner() {
+        warehouseCount++;
+        warehouses[warehouseCount].managerID = _params.managerID;
+        warehouses[warehouseCount].warehouseID = warehouseCount;
+        warehouses[warehouseCount].zipCode = _params.zipCode;
+        warehouses[warehouseCount].longitude = _params.longitude;
+        warehouses[warehouseCount].lattitude = _params.lattitude;
+        warehouses[warehouseCount].temp = _params.storageTemprature;
+        warehouses[warehouseCount].cond = _params.cond;
     }
 
     function addManufacturer(AddChainParticipantParams memory _params) external onlyOwner() {
