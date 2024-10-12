@@ -138,8 +138,8 @@ contract Medchain is IMedchain, Ownable {
     }
 
     // ========================= ADMIN FUNCTIONS  ========================= 
-    function addProduct(AddProductParams memory _params) external onlyOwner() {
-        bytes32 productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));
+    function addProduct(AddProductParams memory _params) external onlyOwner() returns(bytes32 productID) {
+        productID = keccak256(abi.encodePacked(_params.name, nonce, block.timestamp));
         nonce++;
 
         productCount++;
