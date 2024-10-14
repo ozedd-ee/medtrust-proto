@@ -19,6 +19,7 @@ interface IMedchain {
     event Shipped(bytes32 productID, uint256 batchNo, uint32 distributorID);
     event ReceivedByRetailer(bytes32 productID, uint256 batchNo, address retailerID);
 
+    // ======================= OBJECTS =======================
     struct Product {
         string name;
         string description;
@@ -61,6 +62,7 @@ interface IMedchain {
         mapping(bytes32 => uint256[]) stored; // productID > array of batch numbers
     }
 
+    // ======================= STAKEHOLDERS =======================
     struct rawMatSupplier {
         string name; // name of supplier
         string location; //Physical address of supplier
@@ -88,6 +90,7 @@ interface IMedchain {
         address addr; // Also serves as retailer's ID
     }
 
+    // ======================= INPUT PARAMETERS =======================
     struct AddProductParams {
         string name;
         string description;
@@ -129,7 +132,20 @@ interface IMedchain {
         address retailerID;
     }
 
-// Create Warehouse struct to track location, storage conditions, batches stored(using a map) etc
+    // ======================= BUFFERS =======================
+    struct BatchBuffer {
+        uint32 numberOfUnitsProduced;
+        uint32 numberOfUnitsSold;
+        uint32 rawMatSupplierID; // ID of the supplier of the raw materials for a particular batch
+        uint32 manufacturerID;
+        uint32 distributorID;
+        uint256 manufactureDate;
+        uint256 expiryDate; 
+        uint256 batchNo; // batch number
+        Stage stage; // Current stage in the supply chain process
+    }
+
+    // ======================= ENUMS =======================
     enum Stage {
         Manufactured,
         DepartedForWarehouse,
