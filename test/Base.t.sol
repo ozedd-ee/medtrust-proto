@@ -3,8 +3,9 @@ pragma solidity 0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Medchain, IMedchain} from "../src/Medchain.sol";
+import {ErrorsAndEvents} from "./helpers/ErrorsAndEvents.sol";
 
-contract BaseTest is Test {
+contract BaseTest is Test, ErrorsAndEvents {
     address owner = vm.addr(uint256(keccak256("OWNER")));
     address manufacturer = vm.addr(uint256(keccak256("MANUFACTURER")));
     address distributor = vm.addr(uint256(keccak256("DISTRIBUTOR")));
@@ -12,6 +13,7 @@ contract BaseTest is Test {
     address warehouse1manager = vm.addr(uint256(keccak256("WAREHOUSEMANAGER1")));
     address supplier1 = vm.addr(uint256(keccak256("SUPPLIER1")));    
     address user1 = vm.addr(uint256(keccak256("USER1")));
+    bytes32 XSyrupID;
 
     Medchain medchain;
 
@@ -25,11 +27,11 @@ contract BaseTest is Test {
         vm.label(user1, "User1");
     }
 
-    function setup() public {
+    function setUp() public virtual {
         vm.startPrank(owner);
         medchain = new Medchain();
 
-        medchain.addProduct(IMedchain.AddProductParams("XSyrup","Wellness in a bottle"));
+        XSyrupID = medchain.addProduct(IMedchain.AddProductParams("XSyrup","Wellness in a bottle"));
         medchain.addWarehouse(IMedchain.AddWarehouseParams(warehouse1manager, 72836, "138.2", "45.6", "33.5", IMedchain.StorageCondition.Cooled));
         medchain.addManufacturer(IMedchain.AddChainParticipantParams("MCorp", "Lagos, NG", manufacturer));
         medchain.addDistributor(IMedchain.AddChainParticipantParams("DCorp", "Abia, NG", distributor));
