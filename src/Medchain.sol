@@ -197,4 +197,19 @@ contract Medchain is IMedchain, Ownable {
         retailers[_addr].location = _location;
         retailers[_addr].addr = _addr;
     }
+
+    // ======================= VIEW FUNCTIONS =======================
+    function getBatch(bytes32 _productID, uint256 _batchNo) public view returns(BatchBuffer memory batch) {
+        Batch storage batchRef = products[_productID].productBatches[_batchNo];
+        batch.distributorID = batchRef.distributorID;
+        batch.expiryDate = batchRef.expiryDate;
+        batch.manufactureDate = batchRef.manufactureDate;
+        batch.manufacturerID = batchRef.manufacturerID;
+        batch.numberOfUnitsProduced = batchRef.numberOfUnitsProduced;
+        batch.numberOfUnitsSold = batchRef.numberOfUnitsSold;
+        batch.numberOfUnitsProduced = batchRef.numberOfUnitsProduced;
+        batch.rawMatSupplierID = batchRef.rawMatSupplierID;
+        batch.batchNo = batchRef.batchNo;
+        batch.stage = batchRef.stage;
+    } 
 }
