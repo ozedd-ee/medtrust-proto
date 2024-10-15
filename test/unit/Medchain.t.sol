@@ -36,4 +36,49 @@ contract MedchainTest is BaseTest {
         vm.assertEq(batch.numberOfUnitsProduced, 50);
         vm.assertTrue(batch.stage == IMedchain.Stage.Manufactured);
     }
+
+    function test_MoveToWarehouse() external {
+        vm.startPrank(distributor);
+
+        vm.expectEmit(true, true, true, false, address(medchain));
+        emit DepartedForWarehouse(XSyrupID, 1, 1);
+
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        vm.assertTrue(batch.stage == IMedchain.Stage.DepartedForWarehouse);
+    }
+
+    function test_Store() external {
+        // Batch must be moved to warehouse before storage
+        vm.startPrank(distributor);
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(warehouse1manager);
+        vm.expectEmit(true, true, true, false, address(medchain));
+        emit ArrivedWarehouse(XSyrupID, 1, 1);
+        // Store batch
+        medchain.store(XSyrupID, 1, 1);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        vm.assertTrue(batch.stage == IMedchain.Stage.ArrivedWarehouse);
+    }
+
+    function test_MoveFromWarehouse() external {
+        // Batch must stored in warehouse to be moved from it
+        vm.startPrank(distributor);
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(warehouse1manager);
+        medchain.store(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(distributor);
+        vm.expectEmit(true, true, true, true, address(medchain));
+        emit DepartedWarehouse(XSyrupID, 1, 1, 1);
+
+        medchain.moveFromWarehouse(XSyrupID, 1, 1, 1);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        vm.assertTrue(batch.stage == IMedchain.Stage.DepartedWarehouse);
+    }
 }
