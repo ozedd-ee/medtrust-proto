@@ -22,7 +22,7 @@ contract BaseTest is Test, ErrorsAndEvents {
         vm.label(manufacturer, "Manufacturer");
         vm.label(distributor, "Distributor");
         vm.label(retailer, "Retailer");
-        vm.label(warehouse1manager, "WarehouseManager1");
+        vm.label(warehouse1manager, "Warehouse1Manager");
         vm.label(supplier1, "Supplier1");
         vm.label(user1, "User1");
     }
