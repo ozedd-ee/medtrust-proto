@@ -14,6 +14,8 @@ contract BaseTest is Test, ErrorsAndEvents {
     address supplier1 = vm.addr(uint256(keccak256("SUPPLIER1")));    
     address user1 = vm.addr(uint256(keccak256("USER1")));
     bytes32 XSyrupID;
+    
+    uint256 expiry = block.timestamp + 730 days;
 
     Medchain medchain;
 
