@@ -34,6 +34,7 @@ contract Medchain is IMedchain, Ownable {
         product.totalProductStock += _params.noOfUnits;
 
         Batch storage batch = product.productBatches[product.batchCounter];
+        batch.batchNo = product.batchCounter;
         batch.numberOfUnitsProduced = _params.noOfUnits;
         batch.rawMatSupplierID = _params.rawMatSupplierID;
         batch.manufacturerID = _params.manufacturerID;
@@ -61,7 +62,7 @@ contract Medchain is IMedchain, Ownable {
         require(batch.stage == Stage.Manufactured, "Batch not ready for dispatch");
         batch.stage = Stage.DepartedForWarehouse;
 
-        emit DepartedForWarehouse(_productID, _batchNo, _distributorID);
+        emit DepartedForWarehouse(_productID, batch.batchNo, _distributorID);
     }
 
     function store(bytes32 _productID, uint256 _batchNo, uint32 _warehouseID) external {
@@ -84,13 +85,13 @@ contract Medchain is IMedchain, Ownable {
         uint256[] storage stored = warehouses[_warehouseID].stored[_productID];
         for (uint256 i; i <= stored.length; i++) {
             if (stored[i] == _batchNo) {
-                stored[i] = stored[stored.length + 1];
+                stored[i] = stored[stored.length-1];
                 stored.pop();
             }
         }
         batch.stage = Stage.DepartedWarehouse;
 
-        emit DepartedWarehouse(_productID, _batchNo, _warehouseID, _distributorID);
+        emit DepartedWarehouse(_productID, batch.batchNo, _warehouseID, _distributorID);
     }
 
     function ship(bytes32 _productID, uint256 _batchNo, uint32 _distributorID) external {
@@ -101,7 +102,7 @@ contract Medchain is IMedchain, Ownable {
         require(batch.stage == Stage.DepartedWarehouse, "Batch has not left the warehouse");
         batch.stage = Stage.Shipped;
 
-        emit Shipped(_productID, _batchNo, _distributorID);
+        emit Shipped(_productID, batch.batchNo, _distributorID);
     }
 
     function receiveBatch(bytes32 _productID, uint256 _batchNo, address _retailerID) external {
@@ -112,7 +113,7 @@ contract Medchain is IMedchain, Ownable {
         require(batch.stage == Stage.Shipped, "Batch not yet shipped");
         batch.stage = Stage.Retail;
 
-        emit ReceivedByRetailer(_productID, _batchNo, _retailerID);
+        emit ReceivedByRetailer(_productID, batch.batchNo, _retailerID);
     }
 
     function makeSale(SaleParams memory _params) external {
@@ -212,4 +213,8 @@ contract Medchain is IMedchain, Ownable {
         batch.batchNo = batchRef.batchNo;
         batch.stage = batchRef.stage;
     } 
+
+    function getStoredBatches(bytes32 _productID, uint32 _warehouseID) public view returns(uint256[] memory) {
+        return warehouses[_warehouseID].stored[_productID];
+    }
 }
