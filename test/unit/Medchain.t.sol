@@ -11,7 +11,6 @@ contract MedchainTest is BaseTest {
 
     function test_Manufacture() external {
         vm.startPrank(manufacturer);
-        uint256 expiry = block.timestamp + 730 days;
 
         vm.expectEmit(true, true, false, false, address(medchain));
         emit NewBatch(XSyrupID, 1);
@@ -38,8 +37,12 @@ contract MedchainTest is BaseTest {
     }
 
     function test_MoveToWarehouse() external {
-        vm.startPrank(distributor);
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
 
+        vm.startPrank(distributor);
         vm.expectEmit(true, true, true, false, address(medchain));
         emit DepartedForWarehouse(XSyrupID, 1, 1);
 
@@ -49,6 +52,11 @@ contract MedchainTest is BaseTest {
     }
 
     function test_Store() external {
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
+
         // Batch must be moved to warehouse before storage
         vm.startPrank(distributor);
         medchain.moveToWarehouse(XSyrupID, 1, 1);
@@ -60,10 +68,24 @@ contract MedchainTest is BaseTest {
         // Store batch
         medchain.store(XSyrupID, 1, 1);
         IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+
+        uint256[] memory stored = medchain.getStoredBatches(XSyrupID, 1);
+        bool isStored;
+        for (uint256 i = 0; i <= stored.length; i++) {
+            if (stored[i] == 1) {
+                isStored = true;
+                break;
+            }
+        }
         vm.assertTrue(batch.stage == IMedchain.Stage.ArrivedWarehouse);
+        vm.assertTrue(isStored);
     }
 
     function test_MoveFromWarehouse() external {
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
         // Batch must stored in warehouse to be moved from it
         vm.startPrank(distributor);
         medchain.moveToWarehouse(XSyrupID, 1, 1);
@@ -79,6 +101,41 @@ contract MedchainTest is BaseTest {
 
         medchain.moveFromWarehouse(XSyrupID, 1, 1, 1);
         IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+
+        uint256[] memory stored = medchain.getStoredBatches(XSyrupID, 1);
+        bool isStored;
+        for (uint256 i; i < stored.length; i++) {
+            if (stored[i] == batch.batchNo) {
+                isStored = true;
+                break;
+            }
+        }
+        vm.assertFalse(isStored);
         vm.assertTrue(batch.stage == IMedchain.Stage.DepartedWarehouse);
+    }
+
+    function test_Ship() external {
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
+        // Batch must have departed warehouse to be shipped
+        vm.startPrank(distributor);
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(warehouse1manager);
+        medchain.store(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(distributor);
+        medchain.moveFromWarehouse(XSyrupID, 1, 1, 1);
+
+        vm.expectEmit(true, true, true, false, address(medchain));
+        emit Shipped(XSyrupID, 1, 1);
+
+        medchain.ship(XSyrupID, 1, 1);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        vm.assertTrue(batch.stage == IMedchain.Stage.Shipped);
     }
 }
