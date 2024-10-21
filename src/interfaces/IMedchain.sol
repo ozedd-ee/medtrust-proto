@@ -133,6 +133,15 @@ interface IMedchain {
     }
 
     // ======================= BUFFERS =======================
+    struct ProductBuffer {
+        string name;
+        string description;
+        bytes32 productID;
+        uint256 batchCounter; //number of batches produced
+        uint256 totalProductStock;
+        uint256 totalUnitsSold;
+    }
+
     struct BatchBuffer {
         uint32 numberOfUnitsProduced;
         uint32 numberOfUnitsSold;
