@@ -200,6 +200,16 @@ contract Medchain is IMedchain, Ownable {
     }
 
     // ======================= VIEW FUNCTIONS =======================
+    function getProduct(bytes32 _productID) public view returns(ProductBuffer memory product) {
+        Product storage productRef = products[_productID];
+        product.name = productRef.name;
+        product.description = productRef.description;
+        product.productID = productRef.productID;
+        product.batchCounter = productRef.batchCounter;
+        product.totalProductStock = productRef.totalProductStock;
+        product.totalUnitsSold = productRef.totalUnitsSold;
+    }
+
     function getBatch(bytes32 _productID, uint256 _batchNo) public view returns(BatchBuffer memory batch) {
         Batch storage batchRef = products[_productID].productBatches[_batchNo];
         batch.distributorID = batchRef.distributorID;
@@ -212,7 +222,17 @@ contract Medchain is IMedchain, Ownable {
         batch.rawMatSupplierID = batchRef.rawMatSupplierID;
         batch.batchNo = batchRef.batchNo;
         batch.stage = batchRef.stage;
-    } 
+    }
+
+    function getUnitInfo(bytes32 _productID, uint256 _batchNo, uint32 _unitID) public view returns(Unit memory unit) {
+        Batch storage batchRef = products[_productID].productBatches[_batchNo];
+        Unit storage unitRef = batchRef.units[_unitID];
+        unit.productID = unitRef.productID;
+        unit.unitID = unitRef.unitID;
+        unit.batchNo = unitRef.batchNo;
+        unit.retailerID = unitRef.retailerID;
+        unit.status = unitRef.status;
+    }
 
     function getStoredBatches(bytes32 _productID, uint32 _warehouseID) public view returns(uint256[] memory) {
         return warehouses[_warehouseID].stored[_productID];
