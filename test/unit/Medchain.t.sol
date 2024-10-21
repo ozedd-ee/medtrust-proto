@@ -138,4 +138,71 @@ contract MedchainTest is BaseTest {
         IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
         vm.assertTrue(batch.stage == IMedchain.Stage.Shipped);
     }
+
+    function test_Recieve() external {
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
+        // Batch must have departed warehouse to be shipped
+        vm.startPrank(distributor);
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(warehouse1manager);
+        medchain.store(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(distributor);
+        medchain.moveFromWarehouse(XSyrupID, 1, 1, 1);
+        medchain.ship(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(retailer);
+        vm.expectEmit(true, true, true, false, address(medchain));
+        emit ReceivedByRetailer(XSyrupID, 1, retailer);
+
+        medchain.receiveBatch(XSyrupID, 1, retailer);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        vm.assertTrue(batch.stage == IMedchain.Stage.Retail);
+    }
+
+    function test_makeSale() external {
+        vm.startPrank(manufacturer);
+        IMedchain.ManufactureParams memory params = IMedchain.ManufactureParams(XSyrupID, 50, 1, 1, expiry);
+        medchain.manufacture(params);
+        vm.stopPrank();
+        // Batch must have departed warehouse to be shipped
+        vm.startPrank(distributor);
+        medchain.moveToWarehouse(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(warehouse1manager);
+        medchain.store(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(distributor);
+        medchain.moveFromWarehouse(XSyrupID, 1, 1, 1);
+        medchain.ship(XSyrupID, 1, 1);
+        vm.stopPrank();
+
+        vm.startPrank(retailer);
+        medchain.receiveBatch(XSyrupID, 1, retailer);
+
+        vm.expectEmit(true, true, true, false, address(medchain));
+        emit UnitSold(XSyrupID, 1, 1);
+
+        IMedchain.SaleParams memory saleParams = IMedchain.SaleParams(XSyrupID, 1, 1, address(retailer));
+        medchain.makeSale(saleParams);
+
+        (,,,,, uint256 totalUnitsSold) = medchain.products(XSyrupID);
+        IMedchain.BatchBuffer memory batch = medchain.getBatch(XSyrupID, 1);
+        IMedchain.Unit memory unit = medchain.getUnitInfo(XSyrupID, 1, 1);
+
+        vm.assertEq(totalUnitsSold, 1);
+        vm.assertEq(batch.numberOfUnitsSold, 1);
+        vm.assertEq(unit.retailerID, address(retailer));
+        vm.assertTrue(batch.stage == IMedchain.Stage.Retail);
+        vm.assertTrue(unit.status == IMedchain.Status.Sold);
+    }
 }
